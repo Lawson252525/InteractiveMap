@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace InteractiveMap.Control {
+namespace InteractiveMap.Models {
     /// <summary>
     /// Класс для обработки секций
     /// Секция содержит свои границы на карте

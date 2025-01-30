@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace InteractiveMap.Control {
     /// <summary>
@@ -7,16 +8,16 @@ namespace InteractiveMap.Control {
     /// Чтобы двигать камеру необходимо зажать правую кнопку мыши и перемещать ее.
     /// Для зума используется колесико мышки
     /// </summary>
-    [DisallowMultipleComponent, RequireComponent(typeof(Camera))]
+    [DisallowMultipleComponent, RequireComponent(typeof(Camera), typeof(Physics2DRaycaster))]
     public sealed class CameraControl : MonoBehaviour {
         /// <summary>
         /// Минимальное значение зума камеры
         /// </summary>
-        private const float MIN_ZOOM = 3f;
+        public const float MIN_ZOOM = 3f;
         /// <summary>
         /// Максимальное значения зума камеры
         /// </summary>
-        private const float MAX_ZOOM = 8f;
+        public const float MAX_ZOOM = 8f;
         /// <summary>
         /// Минимальная скорость движения камеры
         /// </summary>
@@ -212,6 +213,13 @@ namespace InteractiveMap.Control {
             this.zoomSensetiveDelta += this.zoomSensetive;
             float delta = (this.zoomSensetiveDelta + this.zoomSensetive) * -value;
             this.targetZoom = Mathf.Clamp(this.targetZoom + delta, minZoom, maxZoom);
+        }
+
+        /// <summary>
+        /// Метод возвращает еткущее значение зума камеры
+        /// </summary>
+        public float GetZoom() {
+            return this.currentZoom;
         }
 
     }

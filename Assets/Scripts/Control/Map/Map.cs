@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using InteractiveMap.Models;
 using UnityEngine;
 
 namespace InteractiveMap.Control {
@@ -37,6 +38,10 @@ namespace InteractiveMap.Control {
         /// Массив секций на карте
         /// </summary>
         private Section[] sections = new Section[0];
+        /// <summary>
+        /// Массив островов на карте
+        /// </summary>
+        private Island[] islands = new Island[0];
 
         private new SpriteRenderer renderer = null;
 
@@ -96,6 +101,9 @@ namespace InteractiveMap.Control {
                 Section section = new Section(0, 0, Borders);
                 this.sections = new Section[1]{section};
             }
+
+            //Получаем массив островов на карте
+            this.islands = GetComponentsInChildren<Island>();
         }
 
         public IEnumerator<Section> GetEnumerator() {
