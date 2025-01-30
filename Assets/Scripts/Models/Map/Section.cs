@@ -27,8 +27,7 @@ namespace InteractiveMap.Models {
             this.size = size;
         }
 
-        public bool Equals(Section other)
-        {
+        public bool Equals(Section other) {
             return other && other.index == this.index;
         }
 
