@@ -29,7 +29,7 @@ namespace InteractiveMap.Control {
         [Range(0.1f, 5f)]
         public float minMoveSpeed = 3f;
 
-        public override void Update() {
+        public override void OnUpdate() {
             if (this.element is null || this.element.isComplete) return;
 
             //Запоминаем предыдущую пози
@@ -56,7 +56,7 @@ namespace InteractiveMap.Control {
             rotation.z += this.element.speed * Time.deltaTime * 100f;
             this.transform.rotation = Quaternion.Euler(rotation);
 
-            base.Update();
+            base.OnUpdate();
         }
 
         public void OnPointerClick(PointerEventData eventData) {}

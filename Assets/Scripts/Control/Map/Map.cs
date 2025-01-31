@@ -129,6 +129,9 @@ namespace InteractiveMap.Control {
 
         //         var tornadoView = Instantiate<TornadoView>(tornadoPrefab, this.transform.position, Quaternion.identity, this.transform);
         //         tornadoView.element = tornadoEvent;
+
+        //         //Сбрасываем все изменения
+        //         tornadoEvent.Reset();
         //     }
         // }
         //

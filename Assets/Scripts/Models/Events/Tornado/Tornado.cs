@@ -1,4 +1,5 @@
 ﻿using System;
+using UnityEngine;
 
 namespace InteractiveMap.Models {
     /// <summary>
@@ -17,8 +18,19 @@ namespace InteractiveMap.Models {
 
         public Tornado(string id, DateTime creationTime) : base(id, creationTime) {}
 
-        public Tornado(string id, DateTime creationTime, DateTime expiresDate) : base(id, creationTime) {
+        public Tornado(string id, DateTime creationTime, DateTime expiresDate, float speed, Vector2 position, Vector2 destination, Vector2Int index) : base(id, creationTime) {
             this.objExpiresDate = expiresDate;
+            this.speed = speed;
+            this.position = position;
+            this.destination = destination;
+            this.sectionIndex = index;
+
+            //Сбрасываем изменения события
+            Reset();
+        }
+
+        public Tornado(string id, DateTime creationTime, TornadoContainer container) :base(id, creationTime) {
+            ApplyContainer(container);
         }
 
         public override void ApplyContainer(IEventContainer container) {
@@ -29,6 +41,9 @@ namespace InteractiveMap.Models {
                 this.sectionIndex = con.sectionIndex;
                 this.position = con.position;
                 this.objExpiresDate = con.expires;
+
+                //Сбрасываем изменения события
+                Reset();
             }
         }
 

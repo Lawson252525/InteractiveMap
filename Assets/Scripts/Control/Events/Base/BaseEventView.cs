@@ -19,7 +19,7 @@ namespace InteractiveMap.Control {
         /// <summary>
         /// Метод обновления события
         /// </summary>
-        public abstract void Update();
+        public abstract void OnUpdate();
 
         /// <summary>
         /// Свойство устанавливает данные события

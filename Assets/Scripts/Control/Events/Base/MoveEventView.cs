@@ -26,7 +26,7 @@ namespace InteractiveMap.Control {
             base.Start();
         }
 
-        public override void Update() {
+        public override void OnUpdate() {
             if (this.element is null || this.element.isComplete) return;
 
             //Регистрируем секцию в которой находится событие
