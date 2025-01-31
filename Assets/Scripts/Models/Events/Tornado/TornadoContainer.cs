@@ -5,7 +5,7 @@ namespace InteractiveMap.Models {
     /// <summary>
     /// Структура контейнер для данных события Вихрь
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public struct TornadoContainer : IEventContainer {
         /// <summary>
         /// Скорость события

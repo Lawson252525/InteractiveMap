@@ -56,7 +56,7 @@ namespace InteractiveMap.Models {
         /// <summary>
         /// Метод помечает событие как изменившееся
         /// </summary>
-        protected void SetDirty() {
+        public void SetDirty() {
             this.objIsChanged = true;
         }
 

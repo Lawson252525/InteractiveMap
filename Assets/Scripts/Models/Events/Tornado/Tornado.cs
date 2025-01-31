@@ -17,6 +17,10 @@ namespace InteractiveMap.Models {
 
         public Tornado(string id, DateTime creationTime) : base(id, creationTime) {}
 
+        public Tornado(string id, DateTime creationTime, DateTime expiresDate) : base(id, creationTime) {
+            this.objExpiresDate = expiresDate;
+        }
+
         public override void ApplyContainer(IEventContainer container) {
             if (container is TornadoContainer) {
                 var con = (TornadoContainer)container;
@@ -35,6 +39,9 @@ namespace InteractiveMap.Models {
             container.sectionIndex = this.sectionIndex;
             container.position = this.position;
             container.expires = this.expiresDate;
+
+            //Сбрасываем изменения события
+            Reset();
 
             return container;
         }

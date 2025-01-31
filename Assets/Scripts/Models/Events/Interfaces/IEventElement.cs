@@ -4,7 +4,7 @@ namespace InteractiveMap.Models {
     /// <summary>
     /// Интерфейс события
     /// </summary>
-    interface IEventElement {
+    public interface IEventElement {
         /// <summary>
         /// Ключ события
         /// </summary>
