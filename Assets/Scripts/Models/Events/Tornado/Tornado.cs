@@ -18,19 +18,15 @@ namespace InteractiveMap.Models {
 
         public Tornado(string id, DateTime creationTime) : base(id, creationTime) {}
 
-        public Tornado(string id, DateTime creationTime, DateTime expiresDate, float speed, Vector2 position, Vector2 destination, Vector2Int index) : base(id, creationTime) {
-            this.objExpiresDate = expiresDate;
-            this.speed = speed;
-            this.position = position;
-            this.destination = destination;
-            this.sectionIndex = index;
+        public Tornado(string id, DateTime creationTime, TornadoContainer container) :base(id, creationTime) {
+            this.speed = container.speed;
+            this.position = container.position;
+            this.destination = container.destination;
+            this.sectionIndex = container.sectionIndex;
+            this.objExpiresDate = container.expires;
 
             //Сбрасываем изменения события
             Reset();
-        }
-
-        public Tornado(string id, DateTime creationTime, TornadoContainer container) :base(id, creationTime) {
-            ApplyContainer(container);
         }
 
         public override void ApplyContainer(IEventContainer container) {
@@ -38,8 +34,12 @@ namespace InteractiveMap.Models {
                 var con = (TornadoContainer)container;
                 this.speed = con.speed;
                 this.destination = con.destination;
-                this.sectionIndex = con.sectionIndex;
-                this.position = con.position;
+
+                //При обновлении данных события из контейнера не нужно устанавливать позицию и индекс секции
+                //this.sectionIndex = con.sectionIndex;
+                //this.position = con.position;
+                //Достаточно передавать точку назначения и скорость с временем жизни
+
                 this.objExpiresDate = con.expires;
 
                 //Сбрасываем изменения события

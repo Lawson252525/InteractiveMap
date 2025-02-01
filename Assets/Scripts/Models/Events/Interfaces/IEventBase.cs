@@ -2,7 +2,7 @@
     /// <summary>
     /// Интерфейс события который помещается в базу данных
     /// </summary>
-    interface IEventBase : IEventElement {
+    public interface IEventBase : IEventElement {
         /// <summary>
         /// Свойство изменения события
         /// </summary>

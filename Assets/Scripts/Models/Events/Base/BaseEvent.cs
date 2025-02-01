@@ -32,6 +32,10 @@ namespace InteractiveMap.Models {
             this.objDate = creationTime;
         }
 
+        public BaseEvent(string id, DateTime creationTime, IEventContainer container) : this(id, creationTime) {
+            ApplyContainer(container);
+        }
+
         public string id => this.objId;
 
         public DateTime creationTime => this.objDate;
@@ -61,6 +65,14 @@ namespace InteractiveMap.Models {
         }
 
         /// <summary>
+        /// Перегрузка метода получения хэш кода события в виде его уникального ключа
+        /// </summary>
+        /// <returns>Хэш код</returns>
+        public override int GetHashCode() {
+            return this.id.GetHashCode();
+        }
+
+        /// <summary>
         /// Метод устанавливает новго владельца события и возвращает true если владалец сменился
         /// </summary>
         /// <param name="newOwner">Новый владелец события</param>
@@ -71,5 +83,10 @@ namespace InteractiveMap.Models {
              this.objOwner = newOwner;
             return true;
         }
+
+        public static implicit operator bool(BaseEvent element) {
+            return Equals(element, null) == false;
+        }
+
     }
 }

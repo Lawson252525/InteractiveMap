@@ -19,10 +19,6 @@ namespace InteractiveMap.Models {
         /// Событие обработчика
         /// </summary>
         private BaseEvent objElement;
-        
-        protected EventWorker(BaseEvent element) {
-            this.objElement = element;
-        }
 
         /// <summary>
         /// Метод обработки
@@ -37,7 +33,21 @@ namespace InteractiveMap.Models {
         /// <summary>
         /// Свойство возвращает событие обработчика
         /// </summary>
-        public BaseEvent element => this.objElement;
+        public BaseEvent element {
+            get {return this.objElement;}
+            protected set {this.objElement = value;}
+        }
+
+        /// <summary>
+        /// Метод инициализаирует событие
+        /// </summary>
+        /// <param name="element">Элемент события</param>
+        public abstract void Initialize(BaseEvent element);
+
+        /// <summary>
+        /// Метод возвращает настройки события
+        /// </summary>
+        public abstract IEventContainer GetSettings();
 
         public static implicit operator bool(EventWorker worker) {
             return Equals(worker, null) == false;
