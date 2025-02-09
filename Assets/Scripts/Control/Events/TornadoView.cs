@@ -11,12 +11,12 @@ namespace InteractiveMap.Control {
         /// <summary>
         /// Максимальное время жизни Вихря в секундах
         /// </summary>
-        [Range(1, 180)]
+        [Range(1, 600)]
         public int maxTimeDelay = 100;
         /// <summary>
         /// Минимальное время жизни Вихря в секундах
         /// </summary>
-        [Range(1, 180)]
+        [Range(1, 600)]
         public int minTimeDelay = 50;
         /// <summary>
         /// Максимальная скорость перемещения вихря
@@ -32,6 +32,10 @@ namespace InteractiveMap.Control {
         public override void OnUpdate() {
             if (this.element is null || this.element.isComplete) return;
 
+            //TEST
+            //CameraControl.Instance.MoveTo(this.transform.position);
+            //
+
             //Запоминаем предыдущую пози
             var oldPosition = this.element.position;
 
@@ -40,13 +44,21 @@ namespace InteractiveMap.Control {
             var newPosition = this.element.position + normal * this.element.speed * Time.deltaTime;
             if (this.borders.Contains(newPosition)) {
                 this.element.position = newPosition;
-                this.transform.position = this.element.position;
+                this.transform.position = newPosition;
+
+                //Если Вихрь доходит то точки 
+                var distance = (this.element.position - this.element.destination).magnitude;
+                if (distance < 0.1f) {
+                    var sections = Map.Instance.GetSections();
+                    var section = sections[UnityEngine.Random.Range(0, sections.Length - 1)];
+                    this.element.destination = section.size.center;
+                }
             }
 
             //Если позиция события изменилась то объявить событие изменившимся
             if ((oldPosition - this.element.position).sqrMagnitude > 0.1f) this.element.SetDirty();
 
-            //Проверка времени жизни Вихря
+            //Проверка времени жизни Вихря только если владелец события это локальный пользователь
             var nowTime = DateTime.Now;
             var complete = nowTime >= this.element.expiresDate;
             if (complete) this.element.Complete();

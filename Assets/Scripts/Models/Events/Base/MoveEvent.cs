@@ -15,7 +15,7 @@ namespace InteractiveMap.Models {
         /// </summary>
         private float objSpeed;
 
-        protected MoveEvent(string id, DateTime creationTime) : base(id, creationTime) {}
+        protected MoveEvent(string id, string owner, DateTime creationTime) : base(id, owner, creationTime) {}
 
         /// <summary>
         /// Свойство устанавливает скорость перемещения события

@@ -8,10 +8,15 @@ namespace InteractiveMap.Models {
     [Serializable]
     public struct TornadoContainer : IEventContainer {
         /// <summary>
+        /// Поле описания
+        /// </summary>
+        [SerializeField]
+        public string description;
+        /// <summary>
         /// Скорость события
         /// </summary>
         [SerializeField]
-        public float speed;
+        public double speed;
         /// <summary>
         /// Точка назначения вихря
         /// </summary>
@@ -31,11 +36,18 @@ namespace InteractiveMap.Models {
         /// Время завершения жизни Вихря
         /// </summary>
         [SerializeField]
-        public DateTime expires;
+        private string expires;
+
+        public DateTime expiresDate {
+            get {return DateTime.Parse(this.expires);}
+            set {this.expires = value.ToString();}
+        }
 
         public string typeName => typeof(Tornado).ToString();
 
         public string Serialize() {
+            this.speed = Math.Round(this.speed, 2);
+
             return JsonUtility.ToJson(this);
         }
     }

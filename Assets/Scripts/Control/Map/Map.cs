@@ -151,6 +151,13 @@ namespace InteractiveMap.Control {
             return this.sections;
         }
 
+        /// <summary>
+        /// Метод возвращает массив всех острово на карте
+        /// </summary>
+        public Island[] GetIslands() {
+            return this.islands;
+        }
+
 #region  Отрисовка секицй на карте через Gizmos только в редакторе
 #if UNITY_EDITOR
   private void OnDrawGizmos() {

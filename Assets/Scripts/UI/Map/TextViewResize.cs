@@ -10,7 +10,6 @@ namespace InteractiveMap.UI {
     /// </summary>
     [DisallowMultipleComponent, RequireComponent(typeof(Text))]
     public sealed class TextViewResize : UIBehaviour {
-
         /// <summary>
         /// Максимальное значение зума под который будет меняться размер элемента
         /// </summary>
@@ -21,6 +20,10 @@ namespace InteractiveMap.UI {
         /// </summary>
         [Range(0.01f, 0.1f)]
         public float maxSize = 0.03f;
+        /// <summary>
+        /// Поле текстового компонента
+        /// </summary>
+        public Text textElement;
 
         /// <summary>
         /// Текущий размер элемента
@@ -41,6 +44,9 @@ namespace InteractiveMap.UI {
             //Получаем компонент формы элемента
             this.transform = base.transform as RectTransform;
             this.originScale = this.scale = this.transform.localScale;
+
+            //Получаем ссылку на текстовый компонент элемента
+            this.textElement = GetComponent<Text>();
         }
 
         private void Update() {

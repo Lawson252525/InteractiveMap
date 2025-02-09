@@ -17,7 +17,7 @@ namespace InteractiveMap.Models {
         /// <summary>
         /// Владелец события
         /// </summary>
-        private User objOwner;
+        private string objOwner;
         /// <summary>
         /// Поле завершения события
         /// </summary>
@@ -27,12 +27,13 @@ namespace InteractiveMap.Models {
         /// </summary>
         private bool objIsChanged = false;
 
-        public BaseEvent(string id, DateTime creationTime) {
+        public BaseEvent(string id, string owner, DateTime creationTime) {
             this.objId = id;
             this.objDate = creationTime;
+            this.objOwner = owner;
         }
 
-        public BaseEvent(string id, DateTime creationTime, IEventContainer container) : this(id, creationTime) {
+        public BaseEvent(string id, string owner, DateTime creationTime, IEventContainer container) : this(id, owner, creationTime) {
             ApplyContainer(container);
         }
 
@@ -40,7 +41,7 @@ namespace InteractiveMap.Models {
 
         public DateTime creationTime => this.objDate;
 
-        public User owner => this.objOwner;
+        public string owner => this.objOwner;
 
         public bool isComplete => this.objIsComplete;
 
@@ -77,7 +78,7 @@ namespace InteractiveMap.Models {
         /// </summary>
         /// <param name="newOwner">Новый владелец события</param>
         /// <returns>Возвращает true или false</returns>
-        public bool SetOwner(User newOwner) {
+        public virtual bool SetOwner(string newOwner) {
             if (this.isComplete || newOwner == this.owner) return false;
 
              this.objOwner = newOwner;

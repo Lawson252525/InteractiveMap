@@ -16,7 +16,7 @@ namespace InteractiveMap.Models {
         /// <summary>
         /// Владелец события
         /// </summary>
-        User owner {get;}
+        string owner {get;}
         /// <summary>
         /// Метод завершения события
         /// </summary>

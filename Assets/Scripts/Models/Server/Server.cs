@@ -49,7 +49,9 @@ namespace InteractiveMap.Models {
         /// </summary>
         /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
         /// <returns>Массив событий</returns>
-        public static IEventBase[] GetAllEvents(bool openClose = true) {
+        public static BaseEvent[] GetAllEvents(bool openClose = true) {
+            HashSet<BaseEvent> results = new HashSet<BaseEvent>();
+
             if (openClose) Open();
 
             var request = "SELECT * FROM events";
@@ -59,15 +61,18 @@ namespace InteractiveMap.Models {
                         try {
                             //Читаем данные событий из базы данных
                             string id = reader.GetValue(reader.GetOrdinal("id")).ToString();
-                            string owner = reader.GetString(reader.GetOrdinal("owner"));
+                            string owner = reader.GetValue(reader.GetOrdinal("owner")).ToString();
                             DateTime creationTime = reader.GetTimeStamp(reader.GetOrdinal("creationTime"));
                             string typeName = reader.GetString(reader.GetOrdinal("type"));
                             string json = reader.GetValue(reader.GetOrdinal("data")).ToString();
 
                             //Конвертируем полученные данные в события
+                            var eventType = Type.GetType(typeName);
+                            var element = Activator.CreateInstance(eventType, id, owner, creationTime, json) as BaseEvent;
+                            if (element) results.Add(element);
 
                         } catch(Exception e) {  
-                            Debug.Log($"Не удалось прочитать одно из событий\n{e}");
+                            Debug.Log($"Не удалось прочитать событие\n{e}");
                         }
                     }
                 }
@@ -75,7 +80,154 @@ namespace InteractiveMap.Models {
 
             if (openClose) Close();
 
-            return null;
+            return results.ToArray();
+        }
+
+        /// <summary>
+        /// Метод возвращает все события для определенного пользователя
+        /// </summary>
+        /// <param name="owner">Ключ пользователя</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Массив событий</returns>
+        public static BaseEvent[] GetEventsFor(string owner, bool openClose = true) {
+            return GetAllEvents(openClose).Where(e => e.owner == owner).ToArray();
+        }
+
+        /// <summary>
+        /// Метод возвращает все события для определенного пользователя
+        /// </summary>
+        /// <param name="user">Пользователь</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Массив событий</returns>
+        public static BaseEvent[] GetEventsFor(User user, bool openClose) {
+            return GetEventsFor(user.id, openClose);
+        }
+
+        /// <summary>
+        /// Метод устанавливает данные события
+        /// </summary>
+        /// <param name="element">Элемент события</param>
+        /// <param name="container">Данные события</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool SetEvent(BaseEvent element, IEventContainer container, bool openClose = true) {
+            bool result = false;
+
+            if (openClose) Open();
+
+            var typeName = container.typeName;
+
+            try {
+                var request = "UPDATE events SET owner=@owner, type=@type, data=@data WHERE id=@id";
+                using(var command = new NpgsqlCommand(request, Connection)) {
+                    //Добавление параметров
+                    command.Parameters.AddWithValue("id", element.id);
+                    command.Parameters.AddWithValue("owner", element.owner);
+                    command.Parameters.AddWithValue("type", typeName);
+
+                    var json = container.Serialize();
+                    command.Parameters.AddWithValue("data", json);
+
+                    command.ExecuteNonQuery();
+
+                    result = true;
+                }
+            } catch(Exception e) {
+                Debug.Log($"Не удалось установить данные события {typeName}\n{e}");
+            }
+
+            if (openClose) Close();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Метод установки значений событию в базе данных
+        /// </summary>
+        /// <param name="id">Ключ события</param>
+        /// <param name="container">Данные события</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool SetEvent(string id, IEventContainer container, bool openClose = true) {
+            bool result = false;
+
+            if (openClose) Open();
+
+            var typeName = container.typeName;
+
+            try {
+                var request = "UPDATE events SET data=@data WHERE id=@id";
+                var json = container.Serialize();
+
+                using(var command = new NpgsqlCommand(request, Connection)) {
+                    //Добавления параметров команду
+                    command.Parameters.AddWithValue("id", id);
+                    command.Parameters.AddWithValue("data", json);
+                    command.ExecuteNonQuery();
+
+                    result = true;
+                }
+            } catch(Exception e) {
+                Debug.Log($"Не удалось установить данные события {typeName}\n{e}");
+            }
+
+            if (openClose) Close();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Метод удаления элемента события
+        /// </summary>
+        /// <param name="element">Элемент события</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool RemoveEvent(BaseEvent element, bool openClose = true) {
+            return RemoveEvent(element.id, openClose);
+        }
+
+        /// <summary>
+        /// Метод удаляет событие из базы данных
+        /// </summary>
+        /// <param name="id">Ключ события</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool RemoveEvent(string id, bool openClose = true) {
+            bool result = false;
+
+            if (openClose) Open();
+
+            try {
+                var request = "DELETE FROM events WHERE id=@id";
+                using(var command = new NpgsqlCommand(request, Connection)) {
+                    //Добавляем параметры в команду
+                    command.Parameters.AddWithValue("id", id);
+
+                    command.ExecuteNonQuery();
+
+                    result = true;
+                }
+            } catch(Exception e) {
+                Debug.Log($"Не удалось стереть событие \n{e}");
+
+                result = false;
+            }
+
+            if (openClose) Close();
+
+            return result;
+        }
+
+        /// <summary>
+        /// Метод создает в базе данных новое событие по параметрам
+        /// </summary>
+        /// <param name="container">Контейнер данных</param>
+        /// <param name="user">Пользователь</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Элемент события</returns>
+        public static BaseEvent CreateEvent(IEventContainer container, User user, bool openClose) {
+            var type = Type.GetType(container.typeName);
+            return CreateEvent(type, container, user, openClose);
         }
 
         /// <summary>
@@ -98,17 +250,18 @@ namespace InteractiveMap.Models {
                     command.Parameters.AddWithValue("type", eventType.ToString());
                     command.Parameters.AddWithValue("owner", user.id);
                     
-                    var data = container.Serialize();
-                    command.Parameters.AddWithValue("data", data);
+                    var json = container.Serialize();
+                    command.Parameters.AddWithValue("data", json);
 
                     using(var reader = command.ExecuteReader()) {
                         while(reader.Read()) {
                             //Получаем уникальный ключ события
-                            string id = reader.GetString(reader.GetOrdinal("id"));
+                            string id = reader.GetValue(reader.GetOrdinal("id")).ToString();
                             DateTime creationTime = reader.GetTimeStamp(reader.GetOrdinal("creationTime"));
+                            string owner = reader.GetValue(reader.GetOrdinal("owner")).ToString();
 
                             //Создаем новый элемент события через активатор
-                            result = Activator.CreateInstance(eventType, id, creationTime, container) as BaseEvent;
+                            result = Activator.CreateInstance(eventType, id, user.id, creationTime, container) as BaseEvent;
 
                             break;
                         }
@@ -149,6 +302,7 @@ namespace InteractiveMap.Models {
                         while(reader.Read()) {
                             //Читаем новый уникальный ключи пользователя
                             result = reader.GetValue(reader.GetOrdinal("id")).ToString();
+
                             break;
                         }
                     }
@@ -193,7 +347,7 @@ namespace InteractiveMap.Models {
                             bool isAdmin = reader.GetBoolean(reader.GetOrdinal("admin"));
 
                             //Добавляем нового пользователя в список
-                            User user = new User(name, id, isAdmin);
+                            User user = new User(name, id, status, isAdmin);
                             users.Add(user);
                         } catch(Exception e) {
                             Debug.Log($"Ошибка получения данных пользователя\n{e}");
@@ -212,26 +366,29 @@ namespace InteractiveMap.Models {
         /// <param name="name">Имя</param>
         /// <param name="password">Пароль</param>
         /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
-        /// <returns>Результат операции</returns>
-        public static bool SignUp(string name, string password, bool openClose = true) {
-            bool result = false;
+        /// <returns>Возвращает ключ пользователя</returns>
+        public static string SignUp(string name, string password, bool openClose = true) {
+            string result = string.Empty;
 
             if (openClose) Open();
 
             try {
-                var request = @"UPDATE users SET status=@status WHERE name=@name AND password=@password";
+                var request = "UPDATE users SET status=@status WHERE name=@name AND password=@password RETURNING id";
                 using(var command = new NpgsqlCommand(request, Connection)) {
                     //Добавляем параметры для команды
                     command.Parameters.AddWithValue("status", "online");
                     command.Parameters.AddWithValue("name", name);
                     command.Parameters.AddWithValue("password", password);
-                    command.ExecuteNonQuery();
-
-                    result = true;
+                    
+                    using(var reader = command.ExecuteReader()) {
+                        while(reader.Read()) {
+                            //Читаем ключ пользователя
+                            result = reader.GetValue(reader.GetOrdinal("id")).ToString();
+                        }
+                    }
                 }
             } catch(Exception e) {
                 Debug.Log($"Ошибка входа пользователя {name}\n{e}");
-                result = false;
             }
 
             if (openClose) Close();

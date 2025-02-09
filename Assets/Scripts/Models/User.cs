@@ -18,11 +18,25 @@ namespace InteractiveMap.Models {
         /// Является ли пользователь админом
         /// </summary>
         public readonly bool isAdmin = false;
+        /// <summary>
+        /// Поле статуса пользователя
+        /// </summary>
+        public readonly bool isOnline = false;
 
-        public User(string name, string id, bool isAdmin = false) {
+        public User(string name, string id, string status, bool isAdmin = false) : this(name, id, status == "online", isAdmin) {}
+
+        public User(string name, string id, bool isOnline = false, bool isAdmin = false) {
             this.name = name;
             this.id = id;
             this.isAdmin = isAdmin;
+            this.isOnline = isOnline;
+        }
+
+        /// <summary>
+        /// Хэш код элемента является его ключом
+        /// </summary>
+        public override int GetHashCode() {
+            return this.id.GetHashCode();
         }
 
         public bool Equals(User other) {

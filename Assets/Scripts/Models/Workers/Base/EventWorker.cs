@@ -9,11 +9,36 @@ namespace InteractiveMap.Models {
         /// <summary>
         /// Событие завершения обработки
         /// </summary>
-        public static System.Action<EventWorker> OnComplete;
+        private System.Action<EventWorker> objOnComplete;
         /// <summary>
         /// Событие запуска обработки
         /// </summary>
-        public static System.Action<EventWorker> OnCreated;
+        private System.Action<EventWorker> objOnCreated;
+
+        /// <summary>
+        /// Подключение события завершения обработки
+        /// </summary>
+        public event System.Action<EventWorker> OnComplete {
+            add {
+                this.objOnComplete -= value;
+                this.objOnComplete += value;
+            } 
+            remove {
+                this.objOnComplete -= value;
+            }
+        }
+        /// <summary>
+        /// Подключение события начала обработки
+        /// </summary>
+        public event System.Action<EventWorker> OnCreated {
+            add {
+                this.objOnCreated -= value;
+                this.objOnCreated += value;
+            } 
+            remove {
+                this.objOnCreated -= value;
+            }
+        }
 
         /// <summary>
         /// Событие обработчика
@@ -45,9 +70,22 @@ namespace InteractiveMap.Models {
         public abstract void Initialize(BaseEvent element);
 
         /// <summary>
-        /// Метод возвращает настройки события
+        /// Метод возвращает случайные настройки события
         /// </summary>
-        public abstract IEventContainer GetSettings();
+        public abstract IEventContainer GenerateSettings();
+
+        /// <summary>
+        /// Вызов метода завершения обработки
+        /// </summary>
+        protected void OnWorkerComplete() {
+            this.objOnComplete?.Invoke(this);
+        }
+        /// <summary>
+        /// Вызов метода начала обработки
+        /// </summary>
+        protected void OnWorkerCreated() {
+            this.objOnCreated?.Invoke(this);
+        }
 
         public static implicit operator bool(EventWorker worker) {
             return Equals(worker, null) == false;

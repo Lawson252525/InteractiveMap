@@ -16,23 +16,29 @@ namespace InteractiveMap.Models {
         /// </summary>
         public DateTime expiresDate => this.objExpiresDate;
 
-        public Tornado(string id, DateTime creationTime) : base(id, creationTime) {}
+        public Tornado(string id, string owner, DateTime creationTime) : base(id, owner, creationTime) {}
 
-        public Tornado(string id, DateTime creationTime, TornadoContainer container) :base(id, creationTime) {
-            this.speed = container.speed;
+        public Tornado(string id, string owner, DateTime creationTime, string containerData) :this(id, owner, creationTime, JsonUtility.FromJson<TornadoContainer>(containerData)) {}
+
+        public Tornado(string id, string owner, DateTime creationTime, TornadoContainer container) :base(id, owner, creationTime) {
+            this.speed = (float)container.speed;
             this.position = container.position;
             this.destination = container.destination;
             this.sectionIndex = container.sectionIndex;
-            this.objExpiresDate = container.expires;
+            this.objExpiresDate = container.expiresDate;
 
             //Сбрасываем изменения события
             Reset();
         }
 
+        public override bool SetOwner(string newOwner) {
+            return base.SetOwner(newOwner);
+        }
+
         public override void ApplyContainer(IEventContainer container) {
             if (container is TornadoContainer) {
                 var con = (TornadoContainer)container;
-                this.speed = con.speed;
+                this.speed = (float)con.speed;
                 this.destination = con.destination;
 
                 //При обновлении данных события из контейнера не нужно устанавливать позицию и индекс секции
@@ -40,7 +46,7 @@ namespace InteractiveMap.Models {
                 //this.position = con.position;
                 //Достаточно передавать точку назначения и скорость с временем жизни
 
-                this.objExpiresDate = con.expires;
+                this.objExpiresDate = con.expiresDate;
 
                 //Сбрасываем изменения события
                 Reset();
@@ -53,7 +59,7 @@ namespace InteractiveMap.Models {
             container.destination = this.destination;
             container.sectionIndex = this.sectionIndex;
             container.position = this.position;
-            container.expires = this.expiresDate;
+            container.expiresDate = this.expiresDate;
 
             //Сбрасываем изменения события
             Reset();

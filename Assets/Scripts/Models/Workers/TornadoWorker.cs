@@ -22,7 +22,7 @@ namespace InteractiveMap.Models {
             this.view = LoadPrefab();
         }
 
-        public override IEventContainer GetSettings() {
+        public override IEventContainer GenerateSettings() {
             IEventContainer result = null;
 
             //Генерируем настройки события случайно
@@ -39,22 +39,32 @@ namespace InteractiveMap.Models {
                 float time = UnityEngine.Random.Range(minTime, maxTime);
                 DateTime expiresTime = startTime.AddSeconds(time);
 
+                var sections = Map.Instance.GetSections();
+                var section = sections[UnityEngine.Random.Range(0, sections.Length - 1)];
+
                 //Устанавливаем точку создания события
-                var section = Map.Instance.GetSections();
-                Vector2 position = Map.Instance.transform.position;
+                Vector2 position = section.size.center;
 
                 //Устанавливаем номер секции события
-                Vector2Int sectionIndex = section.FirstOrDefault(s => s.size.Contains(position)).index;
+                Vector2Int sectionIndex = section.index;
 
                 //Установливаем случайную точку назначения
-                Vector2 destination = section[UnityEngine.Random.Range(0, section.Length - 1)].size.center;
+                var border = Map.Borders;
+                var xMin = border.min.x;
+                var xMax = border.max.x;
+                var yMin = border.min.y;
+                var yMax = border.max.y;
+
+                var xPos = UnityEngine.Random.Range(xMin, xMax);
+                var yPos = UnityEngine.Random.Range(yMin, yMax);
+                Vector2 destination = new Vector2(xPos, yPos);
 
                 //Создаем контейнер с настройками события
                 var container = new TornadoContainer();
-                container.position = position;
-                container.destination = destination;
+                container.position = new Vector2(position.x, position.y);
+                container.destination = new Vector2(destination.x, destination.y);;
                 container.sectionIndex = sectionIndex;
-                container.expires = expiresTime;
+                container.expiresDate = expiresTime;
                 container.speed = speed;
 
                 result = container;
@@ -75,7 +85,8 @@ namespace InteractiveMap.Models {
                 this.view.element = this.element;
 
                 //Вызываем событие создания обработчика
-                OnCreated?.Invoke(this);
+                OnWorkerCreated();
+                
             } else throw new Exception($"Презентер события {element.GetType()} на задан");
         }
 
@@ -94,7 +105,7 @@ namespace InteractiveMap.Models {
                 this.isComplete = true;
 
                 //Вызов события завершения обработки
-                OnComplete?.Invoke(this);
+                OnWorkerComplete();
 
                 return;
             }

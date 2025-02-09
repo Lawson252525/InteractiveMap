@@ -15,7 +15,7 @@ namespace InteractiveMap.Models {
         /// </summary>
         private Vector2 objPosition;
 
-        public PointEvent(string id, DateTime creationTime) : base(id, creationTime) {}
+        public PointEvent(string id, string owner, DateTime creationTime) : base(id, owner, creationTime) {}
 
         /// <summary>
         /// Свойство устанавливает индекс секции
