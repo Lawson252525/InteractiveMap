@@ -39,6 +39,20 @@ namespace InteractiveMap.Control {
             Instance = this;
         }
 
+        //private IEnumerator Start() {
+            //yield return new WaitForSeconds(1f);
+
+            //Добавляем событие корабль для локального игрока
+            // var localUser = Main.LocalUser;
+            // var worker = new ShipWorker(Ship.Types.Small);
+            // ShipContainer container = (ShipContainer)worker.GenerateSettings();
+            // container.crew = new string[1] {localUser.id};
+            // CreateEvent(container, worker, (w) => {
+            //     var pointEvent = w.element as PointEvent;
+            //     if (pointEvent) CameraControl.Instance.MoveTo(pointEvent.position);
+            // });
+        //}
+
         private void Update() {
             //Обрабатывать события каждый кадр здесь
             for(int i = 0; i < this.workers.Count; i++) {
@@ -138,7 +152,7 @@ namespace InteractiveMap.Control {
 
                         //Отправляем запрос на добавление нового события с данными
                         var eventType = Type.GetType(container.typeName);
-                        var element = Server.CreateEvent(eventType, container, localUser, false);
+                        var element = Server.CreateEvent(eventType, container, localUser.id, false);
 
                         if (element) {
                             //Добавляем новый обработчик в массив всех обработчиков
@@ -154,11 +168,13 @@ namespace InteractiveMap.Control {
                             }
                         }
                     }
-                    this.localCreatingWorkers = new Dictionary<IEventContainer, EventWorker>();
+                    if (this.localCreatingWorkers.Count > 0) this.localCreatingWorkers = new Dictionary<IEventContainer, EventWorker>();
 
                     //Обновляем обработчики локального пользователя в базе данных
                     foreach(var element in localUpdateEvents) {
                         var container = element.GetContainer();
+                        
+                        //print($"Changed {element.GetType()} new values {container.Serialize()}");
 
                         //Обновляем данные в базе данных
                         var result = Server.SetEvent(element, container, false);
@@ -185,6 +201,24 @@ namespace InteractiveMap.Control {
         }
 
         /// <summary>
+        /// Массив возвращает массив событий для указанного типа
+        /// </summary>
+        /// <param name="type">Тип события</param>
+        /// <returns>Массив событий</returns>
+        public BaseEvent[] GetEvents(Type type) {
+            return GetEvents<BaseEvent>().Where(e => e.GetType() == type).ToArray();
+        }
+
+        /// <summary>
+        /// Метод возвращает массив типизированных событий
+        /// </summary>
+        /// <typeparam name="T">Тип события</typeparam>
+        /// <returns>Массив событий</returns>
+        public T[] GetEvents<T>() where T : BaseEvent {
+            return this.workers.Select(w => w.element as T).Where(e => e != null).ToArray();
+        }
+
+        /// <summary>
         /// Метод создания события по его типу
         /// </summary>
         /// <param name="eventType">Тип события</param>
@@ -205,6 +239,12 @@ namespace InteractiveMap.Control {
             } else if (typeof(Treasure).ToString().EndsWith(eventType)) {
                 //Создаем новый обработчик длс события Сокровище
                 worker = new TreasureWorker();
+            } else if (typeof(Flag).ToString().EndsWith(eventType)) {
+                //Создаем новый обработчик для события Метка
+                worker = new FlagWorker();
+            } else if (typeof(Ship).ToString().EndsWith(eventType)) {
+                //Создаем новый обработчик для события Корабль
+                worker = new ShipWorker();
             } else throw new Exception($"Не удалось создать событие {eventType}");
 
             if (worker) {
@@ -238,6 +278,8 @@ namespace InteractiveMap.Control {
 
             if (element is Tornado) result = new TornadoWorker();
             else if (element is Treasure) result = new TreasureWorker();
+            else if (element is Flag) result = new FlagWorker();
+            else if (element is Ship) result = new ShipWorker();
             else throw new Exception($"Не удалось создать событие {element.GetType()} по ключу {element.id}");
 
             if (result) {

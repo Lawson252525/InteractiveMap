@@ -1,16 +1,20 @@
 ﻿using InteractiveMap.Control;
+using InteractiveMap.Utils;
 using UnityEngine;
 
 namespace InteractiveMap.Models {
+    /// <summary>
+    /// Обработчик события Сокровище
+    /// </summary>
     public sealed class TreasureWorker : EventWorkerType<Treasure> {
-        /// <summary>
-        /// Поле завершения обработки
-        /// </summary>
-        private bool isComplete = false;
         /// <summary>
         /// Прещентер события Вихрь
         /// </summary>
         private TreasureView view;
+        /// <summary>
+        /// Поле завершения обработки
+        /// </summary>
+        private bool isComplete = false;
 
         public TreasureWorker() {
             //Загружаем презентер с данными события сокровище
@@ -18,7 +22,20 @@ namespace InteractiveMap.Models {
             this.view = Resources.Load<TreasureView>(prefabName);
         }
 
-        public override void OnUpdate() {}
+        public override void OnUpdate() {
+            if (this.element is null || this.isComplete) return;
+            else if (this.element.isComplete && this.isComplete == false) {
+                this.isComplete = true;
+
+                //Вызов события завершения обработки
+                OnWorkerComplete();
+
+                return;
+            }
+
+            //Обрабатываем презентер события Вихрь
+            if (this.view) this.view.OnUpdate();
+        }
 
         public override IEventContainer GenerateSettings() {
             IEventContainer result = default;
@@ -40,19 +57,15 @@ namespace InteractiveMap.Models {
                 var islands = Map.Instance.GetIslands();
                 var island = islands[Random.Range(0, islands.Length - 1)];  
                 var points = island.points;
-                var position = points[Random.Range(0, points.Length - 1)];
-                var border = island.border;
-                var max = border.max;
-                var min = border.min;
-                var index = 0;
+                Vector2 position = island.transform.position;
+                int index = 0;
                 while(true) {
-                    var x = Random.Range(min.x, max.x);
-                    var y = Random.Range(min.y, max.y);
-                    position = new Vector2(x, y);
-                    if (island.Contains(position)) break;
+                    try {
+                        position = Triangulator.GetRandomPointWithin(points);
+                    } catch {}
 
                     index += 1;
-                    if (index >= 100) break;
+                    if (index > 10) break;
                 }
 
                 //Формируем контейнер с данными события Сокровище

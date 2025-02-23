@@ -33,6 +33,8 @@ namespace InteractiveMap.Models {
             this.position = container.position;
             this.amount = container.amount;
             this.objExpiresTime = container.expiresDate;
+            this.name = container.name;
+            this.description = container.description;
 
             //Сбрасываем изменения события
             Reset();
@@ -43,9 +45,6 @@ namespace InteractiveMap.Models {
                 var con = (TreasureContainer)container;
                 this.amount = con.amount;
                 this.objExpiresTime = con.expiresDate;
-
-                this.name = con.name;
-                this.description = con.description;
 
                 //Сбрасываем изменения события
                 Reset();
@@ -60,6 +59,8 @@ namespace InteractiveMap.Models {
 
             result.name = this.name;
             result.description = this.description;
+
+            result.expiresDate = this.expires;
 
             //Сбрасываем изменения события
             Reset();

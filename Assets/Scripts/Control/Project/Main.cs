@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using InteractiveMap.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -63,6 +64,21 @@ namespace InteractiveMap.Control {
             if (Time.time >= this.usersUpdateTime) {
                 this.usersUpdateTime = Time.time + this.usersUpdateDelay;
 
+                //Процесс обновления данных локального пользователя
+                if (LocalUser) {
+                    if (LocalUser.isChanged) {
+                        //Если есть изменения то сохраняем их в базу
+                        var dict = new Dictionary<string, object>();
+                        dict.Add(nameof(LocalUser.value), LocalUser.value);
+
+                        var result = Server.SetUser(LocalUser.id, dict, false);
+                        if (result == false) Debug.Log($"Не удалось сохранить изменения пользвоателя {LocalUser.id} в базе данных");
+
+                        //Сбрасываем изменения пользователя
+                        LocalUser.Reset();
+                    }
+                }
+
                 //Обработка пользовательских данных
                 this.users = Server.GetAllUsers(false);
 
@@ -74,17 +90,21 @@ namespace InteractiveMap.Control {
                     var id = Server.SignUp(name, password, false);
                     var result = string.IsNullOrEmpty(id) == false;
                     if (result) {
-                        //Записать нового локального пользователя
-                        LocalUser = new User(name, id, true, name == "admin");
+                        //Ищем уже загруженного пользователя 
+                        var localUser = this.users.FirstOrDefault(u => u.id.Equals(id));
+                        if (localUser) {
+                            //Создаем нового локального пользователя
+                            LocalUser = new User(localUser.name, localUser.id, "online", localUser.value, localUser.isAdmin);
 
-                        //Запоминаем пароль локального пользователя
-                        LocalUserPassword = password;
+                            //Запонимаем пароль локального пользователя
+                            LocalUserPassword = SignOperation.password;
+                        }
 
                         print($"Пользователь {name} вошел в систему, имеет права администратора: {LocalUser.isAdmin}");
                     }
 
                     //Отправка события входа пользователя
-                    SignOperation.OnComplete?.Invoke(result);
+                    SignOperation.OnComplete?.Invoke(LocalUser);
 
                     //Удаляем операцию входа пользователя
                     SignOperation = null;
@@ -100,15 +120,44 @@ namespace InteractiveMap.Control {
 
                         //Создаем корабль для нового пользователя
                         if (result) {
-                            int shitType = RegOperation.shipType;
+                            //Помещаем данные в базу просто
+                            var shipType = (Ship.Types)RegOperation.shipType;
+                            Vector2 position = Vector2.zero;
+                            var name = "Корабль";
+                            switch(shipType) {
+                                case Ship.Types.Small: name = "Шлюб";
+                                break;
+                                case Ship.Types.Middle: name = "Брига";
+                                break;
+                                case Ship.Types.Big: name = "Галлион";
+                                break;
+                            }
+                            var description = $"Новый корабль игрока {RegOperation.name}";
+
+                            var worker = new ShipWorker(shipType);
+                            var generatedContainer = (ShipContainer)worker.GenerateSettings();
+
+                            //Контейнер с данными корабля
+                            var container = new ShipContainer() {
+                                name = name,
+                                description = description,
+                                position = position,
+                                speed = generatedContainer.speed,
+                                type = shipType,
+                                ownerId = id,
+                                crewSize = generatedContainer.crewSize,
+                                crew = new string[1] {id},
+                            };
+
+                            result = Server.CreateEvent(typeof(Ship), container, id, false);
                         }
 
                         //Выполняем вход для нового пользователя
                         id = Server.SignUp(RegOperation.name, RegOperation.password, false);
                         result = string.IsNullOrEmpty(id) == false;
                         if (result) {
-                            //Записываем нового зарегистрированного пользователя как локального
-                            LocalUser = new User(RegOperation.name, id, true);
+                            //Создаем нового локального пользователя
+                            LocalUser = new User(RegOperation.name, id, "online", 0, false);
 
                             //Запонимаем пароль локального пользователя
                             LocalUserPassword = RegOperation.password;
@@ -116,7 +165,7 @@ namespace InteractiveMap.Control {
                     }
 
                     //Вызываем событие заврешения операции регистрации
-                    RegOperation.OnComplete?.Invoke(result);
+                    RegOperation.OnComplete?.Invoke(LocalUser);
 
                     //Удаляем операцию регистрации нового пользователя
                     RegOperation = null;
@@ -172,7 +221,7 @@ namespace InteractiveMap.Control {
         private void OnEnable() {
             //Регистрация серверного обработчика
             RegisterServerHandle(this);
-
+            
             //Запуск обработки серверных обработчиков
             StartCoroutine(UpdateServerHandlesRoutine());
 
@@ -261,7 +310,7 @@ namespace InteractiveMap.Control {
         /// <summary>
         /// Класс обработки оперции регистрации в системе
         /// </summary>
-        private class RegisterOperation : SignupOperation {
+        private sealed class RegisterOperation : SignupOperation {
             /// <summary>
             /// Поле типа корябля
             /// </summary>

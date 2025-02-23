@@ -35,6 +35,12 @@ namespace InteractiveMap.UI {
         /// Поле выделения элементов интерфейса
         /// </summary>
         private GraphicRaycaster uiRaycaster;
+        /// <summary>
+        /// Блокировака окна закрытия
+        /// </summary>
+        private float lockTimed = 0f;
+        ///Поле времени блокировки окна закрытия
+        private float lockDelay = 0.1f;
 
         /// <summary>
         /// Свойство возвращает текущую панель управления
@@ -54,6 +60,9 @@ namespace InteractiveMap.UI {
         }
 
         private void Update() {
+            //Если стоит блокировка то пропустить обработку
+            if (Time.time < this.lockTimed) return;
+
             //Операция выделения элнеметов на сцене
             if (Input.GetMouseButtonUp(0)) {
                 var mousePosition = Input.mousePosition;
@@ -87,7 +96,14 @@ namespace InteractiveMap.UI {
         /// <param name="selection">Интерфейс элемента</param>
         /// <returns>Результат выделения</returns>
         public bool Select(ISelectionView selection) {
+            var result = false;
+
             if (selection != this.current) {
+                result = true;
+
+                //Отжимаем выделение
+                if (this.current != null) this.current.OnPointerUp(null);
+
                 this.objCurrent = selection;
 
                 //Удаляем прерыдущую панель
@@ -95,6 +111,9 @@ namespace InteractiveMap.UI {
                 this.view = null;
 
                 if (this.current != null) {
+                    //Нажимаем выделение
+                    this.current.OnPointerClick(null);
+
                     var parent = this.contentContainer.transform as RectTransform;
                     this.view = this.current.CreateViewPanel(parent);
                     if (this.view) {
@@ -107,8 +126,6 @@ namespace InteractiveMap.UI {
 
                         //Открываем панель
                         Open();
-
-                        return true;
                     }
                 }
 
@@ -116,14 +133,19 @@ namespace InteractiveMap.UI {
                 if (this.view is null) Close();
             }
 
-            return false;
+            return result;
         }
 
         protected override void OnChanged(bool flag) {
             base.OnChanged(flag);
 
             //При закрытие панели удалить панели
-            if (flag == false) Select(null);
+            if (flag == false) {
+                Select(null);
+
+                //Устанавливаем блокировку нового открытия
+                this.lockTimed = Time.time + this.lockDelay;
+            }
         }
 
     }

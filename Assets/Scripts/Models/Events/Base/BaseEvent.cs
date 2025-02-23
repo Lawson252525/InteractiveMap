@@ -82,6 +82,7 @@ namespace InteractiveMap.Models {
             if (this.isComplete || newOwner == this.owner) return false;
 
              this.objOwner = newOwner;
+             
             return true;
         }
 

@@ -14,7 +14,7 @@ namespace InteractiveMap.UI {
         /// Свойство возвращает тип элемента
         /// </summary>
         public T element {
-            get {return this.element;}
+            get {return this.objElement;}
             set {this.objElement = value;}
         }
 

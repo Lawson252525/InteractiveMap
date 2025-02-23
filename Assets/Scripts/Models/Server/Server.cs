@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using InteractiveMap.Utils;
 using UnityEngine;
 using UnityNpgsql;
 
@@ -28,11 +29,16 @@ namespace InteractiveMap.Models {
         /// <summary>
         /// Имя базы данных
         /// </summary>
-        static string Base = "postgres";
+        static string BaseName = "postgres";
         /// <summary>
         /// Полные параметры подключения к базе данных
         /// </summary>
-        static string ConnectionParameters = $"Port={Port}; Server={ServerName}; Database={Base}; User ID={User}; Password={Password}";
+        static string ConnectionParameters = $"Port={Port}; Server={ServerName}; Database={BaseName}; User ID={User}; Password={Password}";
+
+        /// <summary>
+        /// Поле настроек сервера
+        /// </summary>
+        private static Dictionary<string, string> EnvSettings = null;
 
         /// <summary>
         /// Свойство возвращает статус соединения с базой
@@ -227,7 +233,19 @@ namespace InteractiveMap.Models {
         /// <returns>Элемент события</returns>
         public static BaseEvent CreateEvent(IEventContainer container, User user, bool openClose) {
             var type = Type.GetType(container.typeName);
-            return CreateEvent(type, container, user, openClose);
+            return CreateEvent(type, container, user.id, openClose);
+        }
+
+        /// <summary>
+        /// Метод создает в базе данных новое событие по параметрам
+        /// </summary>
+        /// <param name="container">Контейнер данных</param>
+        /// <param name="userId">Ключ пользователя</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Элемент события</returns>
+        public static BaseEvent CreateEvent(IEventContainer container, string userId, bool openClose) {
+            var type = Type.GetType(container.typeName);
+            return CreateEvent(type, container, userId, openClose);
         }
 
         /// <summary>
@@ -238,7 +256,7 @@ namespace InteractiveMap.Models {
         /// <param name="user">Пользователь для которого создается событие</param>
         /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
         /// <returns>Элемент события</returns>
-        public static BaseEvent CreateEvent(Type eventType, IEventContainer container, User user, bool openClose = true) {
+        public static BaseEvent CreateEvent(Type eventType, IEventContainer container, string userId, bool openClose = true) {
             BaseEvent result = null;
 
             if (openClose) Open();
@@ -248,7 +266,7 @@ namespace InteractiveMap.Models {
                 using(var command = new NpgsqlCommand(request, Connection)) {
                     //Добавляем параметры команды
                     command.Parameters.AddWithValue("type", eventType.ToString());
-                    command.Parameters.AddWithValue("owner", user.id);
+                    command.Parameters.AddWithValue("owner", userId);
                     
                     var json = container.Serialize();
                     command.Parameters.AddWithValue("data", json);
@@ -261,7 +279,7 @@ namespace InteractiveMap.Models {
                             string owner = reader.GetValue(reader.GetOrdinal("owner")).ToString();
 
                             //Создаем новый элемент события через активатор
-                            result = Activator.CreateInstance(eventType, id, user.id, creationTime, container) as BaseEvent;
+                            result = Activator.CreateInstance(eventType, id, userId, creationTime, container) as BaseEvent;
 
                             break;
                         }
@@ -345,9 +363,10 @@ namespace InteractiveMap.Models {
                             string name = reader.GetString(reader.GetOrdinal("name"));
                             string status = reader.GetString(reader.GetOrdinal("status"));
                             bool isAdmin = reader.GetBoolean(reader.GetOrdinal("admin"));
+                            int value = reader.GetInt32(reader.GetOrdinal("value"));
 
                             //Добавляем нового пользователя в список
-                            User user = new User(name, id, status, isAdmin);
+                            User user = new User(name, id, status, value, isAdmin);
                             users.Add(user);
                         } catch(Exception e) {
                             Debug.Log($"Ошибка получения данных пользователя\n{e}");
@@ -463,9 +482,83 @@ namespace InteractiveMap.Models {
         }
 
         /// <summary>
+        /// Метод устанавливает параметры для пользователя
+        /// </summary>
+        /// <param name="user">Пользователь</param>
+        /// <param name="values">Значения</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool SetUser(User user, Dictionary<string, object> values, bool openClose = true) {
+            return SetUser(user.id, values, openClose);
+        }
+
+        /// <summary>
+        /// Метод устанавливает параметры для пользователя
+        /// </summary>
+        /// <param name="id">Ключ пользователя</param>
+        /// <param name="values">Значения</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool SetUser(string id, Dictionary<string, object> values, bool openClose = true) {
+            bool result = false;
+
+            if (openClose) Open();
+
+            try {
+                //Сортируем параметры данных
+                string paramNames = string.Empty;
+                var count = values.Keys.Count;
+                var keys = values.Keys.GetEnumerator();
+                var index = 0;
+                while(keys.MoveNext()) {
+                    var current = keys.Current;
+                    paramNames = $" {current}=@{current}";
+
+                    if (index < count - 1) paramNames += ',';
+                    index += 1;
+                }
+
+                if (string.IsNullOrEmpty(paramNames) == false) {
+                    var request = $"UPDATE users SET {paramNames} WHERE id=@id";
+                    using(var command = new NpgsqlCommand(request, Connection)) {
+                        //Добавление параметров
+                        command.Parameters.AddWithValue("id", id);
+                        foreach(var pair in values) {
+                            var key = pair.Key;
+                            var value = pair.Value;
+                            command.Parameters.AddWithValue(key, value);
+                        }
+
+                        command.ExecuteNonQuery();
+
+                        result = true;
+                    }
+                }
+            } catch(Exception e) {
+                Debug.LogError($"Не удалось записать пользовательские данные для {id}\n{e}");
+            }
+
+            if (openClose) Close();
+
+            return result;
+        }
+
+        /// <summary>
         /// Метод открывает новое соединения с базой
         /// </summary>
         public static void Open() {
+            //Загружаем данные файла настроек
+            if (EnvSettings is null) {
+                EnvSettings = EnvLoader.GetEnvData();
+
+                //Разбераем настройки сервера
+                EnvSettings.TryGetValue("SERVER", out ServerName);
+                EnvSettings.TryGetValue("PORT", out Port);
+                EnvSettings.TryGetValue("USER", out User);
+                EnvSettings.TryGetValue("PASSWORD", out Password);
+                EnvSettings.TryGetValue("DATABASE", out BaseName);
+            }
+
             if (IsOpen || Connection != null) return; 
 
             try {

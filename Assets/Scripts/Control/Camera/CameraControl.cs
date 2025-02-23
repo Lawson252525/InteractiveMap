@@ -207,7 +207,7 @@ namespace InteractiveMap.Control {
             return borders.width * cameraRect.height / cameraRect.width * 0.5f;
         }
 
-        private void OnZooming(float value) {
+        public void OnZooming(float value) {
             float maxZoom = MAX_ZOOM;
             float minZoom = MIN_ZOOM;
             this.zoomSensetiveDelta += this.zoomSensetive;

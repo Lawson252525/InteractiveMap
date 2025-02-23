@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using InteractiveMap.Models;
 using UnityEngine;
@@ -13,7 +12,6 @@ namespace InteractiveMap.Control {
     /// </summary>
     [DisallowMultipleComponent, RequireComponent(typeof(SpriteRenderer))]
     public sealed class Map : MonoBehaviour, IEnumerable<Section> {
-
         /// <summary>
         /// Синглтон карты
         /// Так как карта всегда одна на сцене то можно к ней будет обращаться напрямую
@@ -34,6 +32,10 @@ namespace InteractiveMap.Control {
         /// </summary>
         [Range(1, 10)]
         public int collums = 3;
+        /// <summary>
+        /// Поле холста карты
+        /// </summary>
+        public RectTransform canvasContainer;
 
         /// <summary>
         /// Массив секций на карте
@@ -108,33 +110,6 @@ namespace InteractiveMap.Control {
             //Получаем массив островов на карте
             this.islands = GetComponentsInChildren<Island>();
         }
-
-        //TEST
-        // private void Start() {
-        //     var tornadoPrefab = Resources.Load<TornadoView>("Events/Tornado");
-        //     if (tornadoPrefab) {
-        //         var minTime = tornadoPrefab.minTimeDelay;
-        //         var maxTime = tornadoPrefab.maxTimeDelay;
-        //         var time = UnityEngine.Random.Range(minTime, maxTime);
-        //         var minSpeed = tornadoPrefab.minMoveSpeed;
-        //         var maxSpeed = tornadoPrefab.maxMoveSpeed;
-        //         var speed = UnityEngine.Random.Range(minSpeed, maxSpeed);
-
-        //         var tornadoEvent = new Tornado("123", DateTime.Now, DateTime.Now.AddSeconds(time));
-        //         tornadoEvent.speed = speed;
-        //         tornadoEvent.position = this.transform.position;
-
-        //         //Устанавливаем тестовую точку назначения как точку крайней секции
-        //         tornadoEvent.destination = this.sections[this.sections.Length - 1].size.center;
-
-        //         var tornadoView = Instantiate<TornadoView>(tornadoPrefab, this.transform.position, Quaternion.identity, this.transform);
-        //         tornadoView.element = tornadoEvent;
-
-        //         //Сбрасываем все изменения
-        //         tornadoEvent.Reset();
-        //     }
-        // }
-        //
 
         public IEnumerator<Section> GetEnumerator() {
             foreach(var section in this.sections) yield return section;

@@ -1,13 +1,12 @@
 ﻿using System;
 using InteractiveMap.Models;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace InteractiveMap.Control {
     /// <summary>
     /// Компонент для отображения данных события Вихрь
     /// </summary>
-    public sealed class TornadoView : MoveEventView<Tornado>, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
+    public sealed class TornadoView : MoveEventView<Tornado> {
         /// <summary>
         /// Максимальное время жизни Вихря в секундах
         /// </summary>
@@ -31,10 +30,6 @@ namespace InteractiveMap.Control {
 
         public override void OnUpdate() {
             if (this.element is null || this.element.isComplete) return;
-
-            //TEST
-            //CameraControl.Instance.MoveTo(this.transform.position);
-            //
 
             //Запоминаем предыдущую пози
             var oldPosition = this.element.position;
@@ -70,12 +65,6 @@ namespace InteractiveMap.Control {
 
             base.OnUpdate();
         }
-
-        public void OnPointerClick(PointerEventData eventData) {}
-
-        public void OnPointerDown(PointerEventData eventData) {}
-
-        public void OnPointerUp(PointerEventData eventData) {}
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using InteractiveMap.UI;
+﻿using System.Linq;
+using InteractiveMap.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -54,6 +55,9 @@ namespace InteractiveMap.Control {
             var min = (Vector2)this.transform.position + new Vector2(xMin, yMin);
             var max = (Vector2)this.transform.position + new Vector2(xMax, yMax);
             this.border = Rect.MinMaxRect(min.x, min.y, max.x, max.y); 
+
+            //Формируем глобальный точки границы
+            this.points = this.points.Select(p => (Vector2)this.transform.position + p).ToArray();
         }
 
         /// <summary>
