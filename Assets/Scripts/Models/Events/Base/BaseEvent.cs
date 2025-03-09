@@ -79,7 +79,7 @@ namespace InteractiveMap.Models {
         /// <param name="newOwner">Новый владелец события</param>
         /// <returns>Возвращает true или false</returns>
         public virtual bool SetOwner(string newOwner) {
-            if (this.isComplete || newOwner == this.owner) return false;
+            if (this.isComplete) return false;
 
              this.objOwner = newOwner;
              

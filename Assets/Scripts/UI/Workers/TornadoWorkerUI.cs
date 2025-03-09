@@ -1,10 +1,9 @@
 ﻿using InteractiveMap.Control;
 using InteractiveMap.Models;
-using InteractiveMap.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace InteractiveMap.IU {
+namespace InteractiveMap.UI {
     /// <summary>
     /// Компонент отображения интерфейса создания события Вихрь
     /// </summary>

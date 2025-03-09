@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using InteractiveMap.Utils;
 using UnityEngine;
 using UnityNpgsql;
@@ -306,6 +308,9 @@ namespace InteractiveMap.Models {
 
             string result = string.Empty;
 
+            //Кэшируем пароль
+            password = GetStringHash(password);
+
             try {
                 //Добавляем пользователя в базу данных
                 var request = "INSERT INTO users(name, password, status) VALUES(@name, @password, @status) RETURNING id";
@@ -391,6 +396,9 @@ namespace InteractiveMap.Models {
 
             if (openClose) Open();
 
+            //Кэшируем пароль
+            password = GetStringHash(password);
+
             try {
                 var request = "UPDATE users SET status=@status WHERE name=@name AND password=@password RETURNING id";
                 using(var command = new NpgsqlCommand(request, Connection)) {
@@ -426,6 +434,9 @@ namespace InteractiveMap.Models {
             bool result = false;
 
             if (openClose) Open();
+
+            //Кэшируем пароль
+            password = GetStringHash(password);
 
             try {
                 var request = "UPDATE users SET status=@status WHERE id=@id AND name=@name AND password=@password";
@@ -490,6 +501,98 @@ namespace InteractiveMap.Models {
         /// <returns>Результат операции</returns>
         public static bool SetUser(User user, Dictionary<string, object> values, bool openClose = true) {
             return SetUser(user.id, values, openClose);
+        }
+
+        /// <summary>
+        /// Метод устанавливает данные для указанной таблицы с параметрами и условиями
+        /// </summary>
+        /// <param name="tableName">Имя таблицы</param>
+        /// <param name="values">Значения</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool SetTableValues(string tableName, Dictionary<string, object> values, bool openClose = true) {
+            return SetTableValues(tableName, values, null, openClose);
+        }
+
+        /// <summary>
+        /// Метод устанавливает данные для указанной таблицы с параметрами и условиями
+        /// </summary>
+        /// <param name="tableName">Имя таблицы</param>
+        /// <param name="values">Значения</param>
+        /// <param name="conditionValues">Условия</param>
+        /// <param name="openClose">Автоматически открыть и закрыть соединение</param>
+        /// <returns>Результат операции</returns>
+        public static bool SetTableValues(string tableName, Dictionary<string, object> values, Dictionary<string, object> conditionValues = null, bool openClose = true) {
+            bool result = false;
+
+            var valuesContainer = string.Empty;
+            var conditionsContainer = string.Empty;
+
+            //Собираем данные в контейнер
+            int index = 0;
+            int count = values.Count;
+            var num = values.Keys.GetEnumerator();
+            while(num.MoveNext()) {
+                var name = num.Current;
+
+                valuesContainer += $" {name}=@{name}";
+                if (index < count - 1) valuesContainer += ",";
+                
+                index += 1;
+            }
+
+            //Собираем условия
+            if (conditionValues != null) {
+                index = 0;
+                count = conditionValues.Count;
+                num = conditionValues.Keys.GetEnumerator();
+                while(num.MoveNext()) {
+                    var name = num.Current;
+
+                    conditionsContainer += $" {name}=@{name}";
+                    if (index < count - 1) conditionsContainer += " AND ";
+
+                    index += 1;
+                }
+            }   
+
+            if (string.IsNullOrEmpty(valuesContainer)) throw new ArgumentException($"Данные для записи не были обнаружены");
+            else {                
+                if (openClose) Open();
+
+                try {
+                    //Заканчиваем сборку условий
+                    if (string.IsNullOrEmpty(conditionsContainer) == false) conditionsContainer = $"WHERE {conditionsContainer}";
+
+                    var request = $"UPDATE {tableName} SET {valuesContainer} {conditionsContainer}";
+                    using(var command = new NpgsqlCommand(request, Connection)) {
+                        //Заполняем параметры команды
+                        foreach(var pair in values) {
+                            var name = pair.Key;
+                            var value = pair.Value;
+                            command.Parameters.AddWithValue(name, value);
+                        }
+
+                        //Заполняем условия
+                        if (conditionValues != null) {
+                            foreach(var pair in conditionValues) {
+                                var name = pair.Key;
+                                var value = pair.Value;
+                                command.Parameters.AddWithValue(name, value);
+                            }
+                        }
+
+                        result = command.ExecuteNonQuery() >= 0;
+                    }
+
+                } catch(Exception err) {
+                    Debug.Log($"Не удалось заполнить данные таблицы {tableName}\n{err}");
+                }
+
+                if (openClose) Close();
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -585,6 +688,26 @@ namespace InteractiveMap.Models {
 
                 IsOpen = false;
             }
+        }
+
+        /// <summary>
+        /// Метод хэширует строку с помощью md5
+        /// </summary>
+        /// <param name="stroke">Строка</param>
+        /// <returns>Хэш строки</returns>
+        private static string GetStringHash(string stroke) {
+            if (string.IsNullOrEmpty(stroke)) return stroke;
+
+            var result = stroke;
+
+            //Хэшируем пароль
+            using (var md5 = MD5.Create()) {
+                var bytes = Encoding.ASCII.GetBytes(stroke);
+                var hash = md5.ComputeHash(bytes);
+                result = Convert.ToBase64String(hash);
+            }
+
+            return result;
         }
 
     }
